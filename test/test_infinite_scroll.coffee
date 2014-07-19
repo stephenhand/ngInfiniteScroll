@@ -153,6 +153,60 @@ describe 'Infinite Scroll', ->
       el.remove()
       scope.$destroy()
 
+
+    'triggers when infinite-scroll-trigger changes': (scroller, container, injScope) ->
+      el = angular.element(scroller)
+      $document.append(el)
+
+      isWindow = true unless container?
+      if not isWindow
+        container.height(1000)
+      else
+        sinon.stub(fakeWindow, 'height').returns(1000)
+        container = fakeWindow
+
+      scope = $rootScope.$new(true)
+      for k, v of injScope
+        scope[k] = v
+      scope.scroll = sinon.spy()
+      scope.scrollTrigger = 1;
+      $compile(el)(scope)
+      $timeout.flush() # 'immediate' call is with $timeout ..., 0
+      scope.scrollTrigger++
+      scope.$digest()
+      $timeout.flush() # 'trigger' call is with $timeout ..., 0
+      scope.scroll.should.have.been.calledOnce
+
+      el.remove()
+      scope.$destroy()
+
+    'does not trigger when infinite-scroll-trigger changes if disabled': (scroller, container, injScope) ->
+      el = angular.element(scroller)
+      $document.append(el)
+
+      isWindow = true unless container?
+      if not isWindow
+        container.height(1000)
+      else
+        sinon.stub(fakeWindow, 'height').returns(1000)
+        container = fakeWindow
+
+      scope = $rootScope.$new(true)
+      for k, v of injScope
+        scope[k] = v
+      scope.scroll = sinon.spy()
+      scope.scrollTrigger = 0;
+      scope.busy = true
+      $compile(el)(scope)
+      $timeout.flush() # 'immediate' call is with $timeout ..., 0
+      scope.scrollTrigger++
+      scope.$digest()
+      $timeout.verifyNoPendingTasks # 'trigger' call is with $timeout ..., 0
+      scope.scroll.should.not.have.been.calledOnce
+
+      el.remove()
+      scope.$destroy()
+
     'only triggers when the container has been sufficiently scrolled down': (scroller, container, injScope) ->
       el = angular.element(scroller)
       $document.append(el)
@@ -247,6 +301,14 @@ describe 'Infinite Scroll', ->
         infinite-scroll-disabled='busy' style='height: 500px;'></div>
       """
 
+    'triggers when infinite-scroll-trigger changes': -> """
+      <div infinite-scroll='scroll()' infinite-scroll-distance='1'
+      infinite-scroll-immediate-check='false'  infinite-scroll-trigger='scrollTrigger' style='height: 500px;'></div>
+      """
+    'does not trigger when infinite-scroll-trigger changes if disabled': -> """
+      <div infinite-scroll='scroll()' infinite-scroll-distance='1'
+       infinite-scroll-immediate-check='false' infinite-scroll-trigger='scrollTrigger' infinite-scroll-disabled='busy' style='height: 500px;'></div>
+      """
     'only triggers when the container has been sufficiently scrolled down': -> """
       <div infinite-scroll='scroll()'
         infinite-scroll-distance='1' style='height: 10000px'></div>

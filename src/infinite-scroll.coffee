@@ -10,6 +10,7 @@ mod.directive 'infiniteScroll', ['$rootScope', '$window', '$timeout', 'THROTTLE_
     infiniteScrollDistance: '='
     infiniteScrollDisabled: '='
     infiniteScrollUseDocumentBottom: '='
+    infiniteScrollTrigger: '='
 
   link: (scope, elem, attrs) ->
     $window = angular.element($window)
@@ -154,6 +155,11 @@ mod.directive 'infiniteScroll', ['$rootScope', '$window', '$timeout', 'THROTTLE_
         throw new Exception("invalid infinite-scroll-container attribute.")
 
     scope.$watch 'infiniteScrollContainer', handleInfiniteScrollContainer
+
+    scope.$watch('infiniteScrollTrigger', (newVal, oldVal)->
+      if newVal isnt oldVal then $timeout(handler)
+    )
+
     handleInfiniteScrollContainer(scope.infiniteScrollContainer or [])
 
     # infinite-scroll-parent establishes this element's parent as the
